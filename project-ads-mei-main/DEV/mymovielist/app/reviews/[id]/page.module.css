@@ -1,0 +1,473 @@
+.page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2.5rem;
+  padding: 3rem 4rem;
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.leftColumn {
+  position: sticky;
+  top: 2rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.movieTitleLink {
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.movieTitleLink:hover {
+  opacity: 0.8;
+}
+
+.movieTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-primary);
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.reviewCard {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  border-radius: var(--radius);
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.reviewCard:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  flex-shrink: 0;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+}
+
+.username:hover {
+  color: var(--accent-start);
+  text-decoration: underline;
+}
+
+.date {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.commentHeader .date {
+  margin-left: auto;
+}
+
+.commentHeader .deleteButton {
+  margin-left: 0.5rem;
+}
+
+.reviewBody {
+  margin-bottom: 2rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  white-space: pre-wrap;
+  text-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.reviewActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reviewActions button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.reviewActions button:last-child {
+  cursor: default;
+}
+
+.reviewActions button:not(:last-child):hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.commentsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.commentCard {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  margin-left: 2rem;
+  position: relative;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.commentCard:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.deleteButton {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.deleteButton:hover {
+  color: var(--danger);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.commentHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.avatarSmall {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  opacity: 0.8;
+}
+
+.usernameLink {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.usernameLink:hover {
+  color: var(--accent-start);
+  text-decoration: underline;
+}
+
+.commentBody {
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  padding-left: 3rem;
+}
+
+.commentActions {
+  display: flex;
+  gap: 0.75rem;
+  padding-left: 3rem;
+}
+
+.commentActions button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.commentActions button:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.loadButtons {
+  display: flex;
+  gap: 1rem;
+  margin-left: 2rem;
+  margin-top: 1rem;
+}
+
+.loadMoreButton {
+  background: transparent;
+  border: 1px solid var(--accent-end);
+  color: var(--accent-end);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.loadMoreButton:hover {
+  background: rgba(96, 165, 250, 0.1);
+}
+
+.loginMessage {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.loginMessage:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.loginMessage p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.loginMessage a {
+  color: var(--accent-start);
+  text-decoration: underline;
+}
+
+.sortControls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.sortButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  transition: color 0.2s;
+  color: var(--muted);
+}
+
+.sortButton:hover {
+  color: var(--text-primary);
+}
+
+.sortButton.active {
+  font-weight: bold;
+  text-decoration: underline;
+  color: var(--primary);
+}
+
+
+/* Responsive */
+@media (max-width: 1205px) {
+  .username {
+    max-width: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    grid-template-columns: 1fr;
+    padding: 2rem;
+  }
+
+  .leftColumn {
+    position: static;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+}
+
+
+@media (max-width: 620px) {
+  .container {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  .reviewCard {
+    padding: 1rem;
+  }
+
+  .reviewHeader {
+    gap: 0.75rem;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .username {
+    font-size: 1rem;
+    max-width: 200px;
+  }
+
+  .reviewBody {
+    font-size: 0.95rem;
+  }
+
+  .reviewActions {
+    gap: 0.5rem;
+  }
+
+  .reviewActions button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .commentCard {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .commentHeader {
+    flex-wrap: wrap;
+  }
+
+  .avatarSmall {
+    width: 28px;
+    height: 28px;
+  }
+
+  .loadButtons {
+    margin-left: 0;
+    flex-direction: column;
+  }
+
+  .loadMoreButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 540px) {
+  .commentHeader {
+    flex-wrap: wrap;
+  }
+
+  .date {
+    margin-left: 0;
+    margin-top: 0.25rem;
+    width: 100%;
+  }
+}
+
+@media (max-width: 450px) {
+  .usernameLink {
+    display: inline-block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.loading,
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.error {
+  color: var(--danger);
+}

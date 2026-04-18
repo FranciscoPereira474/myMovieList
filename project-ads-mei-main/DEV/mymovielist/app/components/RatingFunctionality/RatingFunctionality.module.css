@@ -1,0 +1,139 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+  width: 100%;
+}
+
+.readOnlyContainer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  width: auto;
+}
+
+.readOnlyContainer .starsWrapper {
+  cursor: default;
+}
+
+.readOnlyContainer .star {
+  width: 16px;
+  height: 16px;
+  cursor: default;
+}
+
+.readOnlyContainer .star:hover {
+  transform: none;
+}
+
+.container:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+}
+
+.watchlistButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: var(--bg);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 20px;
+}
+
+.watchlistButton:hover {
+  transform: scale(1.05);
+}
+
+.watchlistButton.active {
+  border-color: var(--accent-start);
+}
+
+.watchlistButton.active svg {
+  fill: var(--accent-start);
+}
+
+.ratingContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.starsWrapper {
+  display: flex;
+  gap: 4px;
+  position: relative;
+  cursor: pointer;
+}
+
+.star {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.star:hover {
+  transform: scale(1.1);
+}
+
+.starIcon {
+  width: 100%;
+  height: 100%;
+  fill: var(--bg);
+  stroke: var(--muted);
+  stroke-width: 0.8;
+  transition: all 0.2s ease;
+}
+
+.star.hovered .starIcon,
+.star.filled .starIcon {
+  fill: var(--accent-start);
+  stroke: var(--accent-start);
+}
+
+.star.half .starIcon {
+  fill: url(#halfGradient);
+  stroke: var(--accent-start);
+}
+
+.ratingValue {
+  margin-left: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffc107;
+  min-width: 40px;
+  text-align: center;
+}
+
+.loginPrompt {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.loginPrompt a {
+  color: #4a9eff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.loginPrompt a:hover {
+  text-decoration: underline;
+}

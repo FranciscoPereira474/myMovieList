@@ -1,0 +1,81 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+.imageWrapper {
+  display: block;
+  transition: all 0.2s ease;
+  border-radius: 0.35rem;
+}
+
+.card:hover .imageWrapper {
+  -webkit-box-shadow: 0px 0px 50px -10px color-mix(in srgb, var(--accent-start) 50%, transparent);
+  box-shadow: 0px 0px 50px -10px color-mix(in srgb, var(--accent-start) 50%, transparent);
+}
+
+.card img {
+  display: block;
+  border: 2px solid var(--muted);
+  border-radius: 0.35rem;
+}
+
+.card:hover img {
+  border: 2px solid var(--accent-start);
+}
+
+.stars {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.star {
+  width: 24px;
+  height: 24px;
+  transition: all 0.2s ease;
+}
+
+.star.full {
+  fill: var(--accent-start);
+}
+
+.star.half {
+  fill: url(#half);
+}
+
+.star.empty {
+  fill: none;
+  stroke: var(--accent-start);
+  stroke-width: 1;
+}
+
+@media (max-width: 768px) {
+  .star {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ratingText {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .star {
+    width: 14px;
+    height: 14px;
+  }
+
+  .stars {
+    gap: 0.15rem;
+  }
+}

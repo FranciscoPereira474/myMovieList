@@ -1,0 +1,42 @@
+/*TODO: when opening gender or rating the movie grid becames 'taller'*/
+
+.movieCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-gap: 20px;
+  justify-items: flex-end;
+}
+
+.movieCard {
+  width: 200px;
+  aspect-ratio: 2/3;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+
+  background: none;
+}
+
+.movieCard:hover {
+  transform: translateY(-4px);
+}
+
+.movieCard img {
+  border-radius: var(--radius);
+}
+
+.movieCard:hover img {
+  border: 2px solid var(--accent-start);
+  -webkit-box-shadow: 0px 0px 50px -10px color-mix(in srgb, var(--accent-start) 50%, transparent);
+  box-shadow: 0px 0px 50px -10px color-mix(in srgb, var(--accent-start) 50%, transparent);
+}
+
+@media (max-width: 1023px) {
+  .movieCards {
+    justify-items: center !important;
+  } 
+}

@@ -1,0 +1,48 @@
+/* TODO: Component size incorrect */
+
+/* Override MUI Accordion background */
+.main-genre-filter-container :global(.MuiAccordion-root) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 98%, white 2%), color-mix(in srgb, var(--bg) 99%, white 1%));
+  color: var(--text-primary);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 4%, transparent);
+  border-radius: var(--radius);
+  margin: 5px;
+
+  width: 100%;
+}
+
+.main-genre-filter-container :global(.MuiAccordion-root.Mui-expanded) {
+  margin: 5px;
+  margin-bottom: 1rem !important;
+}
+
+.genreFilterContainer {
+  display: flex;
+  
+  max-height: 500px;
+  overflow-x: auto;
+  padding-right: 0px;
+}
+
+.genreFilterContainer :global(.MuiFormControlLabel-root) {
+  width: 100% !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  margin: 0 !important;
+}
+
+.genreCheckbox {
+  font-size: 1px;
+}
+
+/* Change the checkbox icon size */
+.genreCheckbox :global(.MuiSvgIcon-root) {
+  font-size: 20px;
+  color: var(--muted);
+}
+
+/* Style the FormControlLabel text */
+.genreFilterContainer :global(.MuiFormControlLabel-label) {
+  font-size: 12px;
+  color: var(--muted);
+}

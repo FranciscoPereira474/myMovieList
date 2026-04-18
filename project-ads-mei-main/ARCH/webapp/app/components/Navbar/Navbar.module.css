@@ -1,0 +1,128 @@
+.navbarWrapper {
+  width: 100%;
+  
+  background: #000000;
+  background: -moz-linear-gradient(top, #000000 0%, #333333 50%, #000000 100%);
+  background: -webkit-linear-gradient(top, #000000 0%, #333333 50%, #000000 100%);
+  background: linear-gradient(to bottom, #000000 0%, #333333 50%, #000000 100%);
+
+  -webkit-box-shadow: 0px 0px 10px 0px #000000; 
+  box-shadow: 0px 0px 10px 0px #000000;
+}
+
+.navbar {
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 1rem 5rem;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-family: var(--font-montserrat), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #cccccc;
+
+  background: #000000;
+  background: -moz-linear-gradient(top, #000000 0%, #333333 50%, #000000 100%);
+  background: -webkit-linear-gradient(top, #000000 0%, #333333 50%, #000000 100%);
+  background: linear-gradient(to bottom, #000000 0%, #333333 50%, #000000 100%);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+.logo:hover {
+  text-shadow: 0px 0px 15px #FFFFFF;
+}
+
+.star {
+  fill: whitesmoke;
+  margin-right: 0.5rem;
+  height: 32px;
+  width: 32px;
+
+  display: inline-block;
+  transform-origin: center;
+}
+
+@keyframes pulsing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.logo:hover .star {
+  animation: spin 1s ease-in-out forwards, pulsing 1s ease-in-out infinite;
+  animation-delay: 0s, 1s;
+}
+
+.navItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.navButton {
+  transition: color 0.3s;
+}
+
+.navButton:hover {
+  color: white;
+}
+
+.navButton svg {
+  display: none;
+  fill: #cccccc;
+  transition: fill 0.3s;
+}
+
+.navButton:hover svg {
+  fill: white;
+}
+
+@media (max-width: 1200px) {
+  .navButton p {
+    display: none;
+  }
+
+  .navButton svg {
+    display: block;
+  }
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem 2rem;
+    gap: 1rem;
+  }
+
+  .navItems {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    align-self: center;
+  }
+}
+
+@media (max-width: 550px) {
+  .searchBarWrapper {
+    order: 99;
+  }
+
+  .navItems {
+    justify-content: space-around;
+  }
+}

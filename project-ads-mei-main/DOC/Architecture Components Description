@@ -1,0 +1,12 @@
+## 1. TMDb API
+The Movie Database (TMDB) is a community built movie and TV database. We are using it's api to populate our database with movie data.
+
+## 2. Database
+We are using a Postgres Database hosted by Supabase to store relevant information (users, movies, ratings, etc.).
+
+## 3. Bad Language Filter API
+Since our application allows users to review movies and make replies to reviews, we use a third party API to filter obscene words so that no manual moderation is required.
+NeutrinoAPI: Bad Word Filter offers a free plan with a limit of 50 requests per day but it is scalabable up to 1M requests per day.
+
+## 4. Recommendation Engine
+This parallel process is used to make personalized recommendations and to manage/maintain data structures relevant to the algorithm.

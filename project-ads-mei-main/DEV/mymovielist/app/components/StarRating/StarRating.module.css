@@ -1,0 +1,10 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #f5c518; /* Star color (yellow/gold) */
+}
+
+.star {
+  font-size: 1.2rem;
+}

@@ -1,0 +1,189 @@
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.controlsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 10px;
+  gap: 10px;
+}
+
+.sortFilterWrapper {
+  margin-left: auto;
+}
+
+.parentContainer{
+  display: grid;
+  gap: 10px;
+
+  grid-template-areas:
+    "filter content content"
+    "filter paging paging";
+
+  grid-template-columns: 1fr 4fr;
+}
+
+.filterContainer{
+  grid-area: filter;
+  margin-right: 20px;
+}
+
+.orderContainer{
+  grid-area: order;
+}
+
+.pagerContainer{
+  grid-area: paging;
+}
+
+/* Filter toggle button - hidden on desktop */
+.filterToggle {
+  display: none;
+}
+
+.closeSidebar {
+  display: none;
+}
+
+.sidebarOverlay {
+  display: none;
+}
+
+/* Tablet and smaller screens */
+@media (max-width: 1023px) {
+  .filterToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 10%, transparent);
+    margin-left: 15px;
+  }
+
+  .filterToggle:hover {
+    background: color-mix(in srgb, var(--accent-start) 10%, var(--bg));
+    border-color: var(--accent-start);
+  }
+
+  .sidebarOverlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebarOverlayOpen {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .parentContainer {
+    grid-template-areas:
+      "content"
+      "paging";
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .filterContainer {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 320px;
+    max-width: 85vw;
+    height: 100vh;
+    background: var(--bg);
+    z-index: 1000;
+    overflow-y: auto;
+    transition: left 0.3s ease;
+    padding: 20px;
+    padding-top: 100px;
+    margin-right: 0;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    grid-area: unset;
+  }
+
+  .filterContainerOpen {
+    left: 0;
+  }
+
+  .closeSidebar {
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 5px 10px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  .closeSidebar:hover {
+    background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  }
+}
+
+/* Mobile screens */
+@media (max-width: 785px) {
+  .parentContainer {
+    padding: 5px;
+    gap: 10px;
+  }
+
+  .filterContainer {
+    width: 280px;
+    padding: 15px;
+    padding-top: 100px;
+  }
+
+  .controlsBar {
+    padding: 10px;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 610px) {
+  .parentContainer {
+    padding: 0;
+    gap: 8px;
+  }
+
+  .filterContainer {
+    width: 260px;
+    padding: 10px;
+    padding-top: 100px;
+  }
+
+  .controlsBar {
+    padding: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .sortFilterWrapper label {
+    display: none !important;
+  }
+}

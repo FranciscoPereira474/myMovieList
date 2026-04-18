@@ -1,0 +1,743 @@
+# =============================================================================
+# GitLab CI/CD Pipeline with Canary Deployment and Rollback Strategy
+# =============================================================================
+# 
+# This pipeline includes:
+# - Canary Deployment (10% to 100% traffic)
+# - Automated Health Check Validation with Auto-Rollback
+# - Manual Rollback to Previous Version
+# - Docker Layer Caching for faster builds
+#
+# =============================================================================
+
+# Include automated rollback jobs from separate file
+include:
+  - local: 'rollback.gitlab-ci.yml'
+
+stages:
+  - build
+  - test
+  - push
+  - deploy
+
+# Only run pipelines on main branches, not feature branches
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "staging"
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+variables:
+  # Enable BuildKit for better caching
+  DOCKER_BUILDKIT: "1"
+  # GCP Registry
+  DOCKER_IMAGE_BASE: "$GCP_IMAGE_NAME"
+  DOCKER_IMAGE_TAG: "$GCP_IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
+  # Docker Hub
+  DOCKERHUB_IMAGE: "$DOCKER_HUB_USERNAME/mymovielist"
+
+# =============================================================================
+# TEMPLATES (Reusable configurations)
+# =============================================================================
+
+.docker_build_template: &docker_build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - echo "$GCP_SA_KEY" | docker login -u _json_key --password-stdin https://$GCP_REGION-docker.pkg.dev
+
+.dockerhub_template: &dockerhub_build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+
+.gcloud_template: &gcloud_setup
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo "$GCP_SA_KEY" > gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file=gcloud-service-key.json
+    - gcloud config set project $GCP_PROJECT_ID
+
+# =============================================================================
+# DEV ENVIRONMENT (deploy branch)
+# =============================================================================
+
+build_dev:
+  stage: build
+  <<: *dockerhub_build
+  script:
+    - echo "Building Docker image for DEV (build only, push after tests)..."
+    # Pull previous image to use as cache (ignore if not exists)
+    - docker pull $DOCKERHUB_IMAGE:dev || true
+    - |
+      docker build \
+        --cache-from $DOCKERHUB_IMAGE:dev \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --build-arg NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL \
+        --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+        --build-arg SUPABASE_URL=$SUPABASE_URL \
+        --build-arg SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY \
+        -t $DOCKERHUB_IMAGE:dev \
+        -t $DOCKERHUB_IMAGE:dev-$CI_COMMIT_SHORT_SHA .
+    # Save image to file for push stage (avoids rebuilding)
+    - mkdir -p docker-images
+    - docker save $DOCKERHUB_IMAGE:dev-$CI_COMMIT_SHORT_SHA > docker-images/dev-image.tar
+    - echo "Docker image built successfully (not pushed yet - waiting for tests)"
+  artifacts:
+    paths:
+      - docker-images/dev-image.tar
+    expire_in: 1 hour
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+
+test_dev:
+  stage: test
+  image: node:18-alpine
+  needs: []  # Run tests in parallel with build for faster feedback
+  script:
+    - echo "Running DEV tests..."
+    - cd DEV/mymovielist
+    - npm ci
+    - echo "Running lint (warnings allowed)..."
+    - npm run lint || true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+
+push_dev:
+  stage: push
+  <<: *dockerhub_build
+  needs: ["build_dev", "test_dev"]  # Only push after both build and tests pass
+  script:
+    - echo "Tests passed! Loading and pushing Docker image to Docker Hub..."
+    - docker load < docker-images/dev-image.tar
+    - echo "Re-tagging image with floating tag..."
+    - docker tag $DOCKERHUB_IMAGE:dev-$CI_COMMIT_SHORT_SHA $DOCKERHUB_IMAGE:dev
+    - echo "Pushing to Docker Hub..."
+    - docker push $DOCKERHUB_IMAGE:dev
+    - docker push $DOCKERHUB_IMAGE:dev-$CI_COMMIT_SHORT_SHA
+    - 'echo "DEV image pushed successfully: $DOCKERHUB_IMAGE:dev-$CI_COMMIT_SHORT_SHA"'
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+
+cleanup_dev_images:
+  stage: push
+  image: alpine:latest
+  needs: ["push_dev"]
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - echo "Cleaning up old dev images (keeping 2 most recent)..."
+    - |
+      # Docker Hub API authentication
+      TOKEN=$(curl -s -H "Content-Type: application/json" -X POST \
+        -d '{"username": "'$DOCKER_HUB_USERNAME'", "password": "'$DOCKER_HUB_TOKEN'"}' \
+        https://hub.docker.com/v2/users/login/ | jq -r .token)
+      
+      if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+        echo "ERROR: Failed to authenticate with Docker Hub"
+        exit 1
+      fi
+      
+      echo "Authenticated successfully"
+      
+      # Get all tags starting with 'dev-' (commit-specific tags)
+      TAGS=$(curl -s -H "Authorization: JWT $TOKEN" \
+        "https://hub.docker.com/v2/repositories/$DOCKER_HUB_USERNAME/mymovielist/tags/?page_size=100" \
+        | jq -r '.results[] | select(.name | startswith("dev-")) | .name' \
+        | sort -r)
+      
+      # Count tags
+      TOTAL_COUNT=$(echo "$TAGS" | wc -l)
+      echo "Found $TOTAL_COUNT dev- tags"
+      
+      # Keep only 2 most recent
+      KEEP_COUNT=2
+      
+      if [ "$TOTAL_COUNT" -le "$KEEP_COUNT" ]; then
+        echo "Not enough images to clean. Keeping all $TOTAL_COUNT images."
+        exit 0
+      fi
+      
+      # Delete old tags (skip first 2)
+      echo "$TAGS" | tail -n +$((KEEP_COUNT + 1)) | while read tag; do
+        echo "Deleting tag: $tag"
+        curl -X DELETE \
+          -H "Authorization: JWT $TOKEN" \
+          "https://hub.docker.com/v2/repositories/$DOCKER_HUB_USERNAME/mymovielist/tags/$tag/" \
+          || echo "Failed to delete $tag"
+      done
+      
+      echo "Cleanup completed"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+  allow_failure: true  # Don't fail pipeline if cleanup fails
+
+
+# Auto-merge dev → staging after dev pipeline passes
+auto_merge_to_staging:
+  stage: deploy
+  image: alpine:latest
+  needs: ["push_dev"]
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI"
+  script:
+    - echo "Auto-merging dev into staging..."
+    - git clone --branch staging https://oauth2:$GITLAB_API_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git repo
+    - cd repo
+    - git fetch origin dev
+    - git merge origin/dev --no-edit -m "Auto-merge dev to staging (Pipeline $CI_PIPELINE_ID)"
+    - git push origin staging
+    - echo "Successfully merged dev into staging"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+      when: on_success
+
+# =============================================================================
+# STAGING ENVIRONMENT (staging branch)
+# =============================================================================
+
+build_staging:
+  stage: build
+  <<: *dockerhub_build
+  script:
+    - echo "Building Docker image for STAGING (build only, push after tests)..."
+    # Pull previous image to use as cache (ignore if not exists)
+    - docker pull $DOCKERHUB_IMAGE:staging || true
+    - |
+      docker build \
+        --cache-from $DOCKERHUB_IMAGE:staging \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --build-arg NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL \
+        --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+        --build-arg SUPABASE_URL=$SUPABASE_URL \
+        --build-arg SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY \
+        -t $DOCKERHUB_IMAGE:staging \
+        -t $DOCKERHUB_IMAGE:staging-$CI_COMMIT_SHORT_SHA .
+    # Save image to file for smoke test stage (avoids rebuilding)
+    - mkdir -p docker-images
+    - docker save $DOCKERHUB_IMAGE:staging-$CI_COMMIT_SHORT_SHA > docker-images/staging-image.tar
+    - echo "Docker image built successfully (not pushed yet - waiting for tests)"
+  artifacts:
+    paths:
+      - docker-images/staging-image.tar
+    expire_in: 1 hour
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging"
+
+test_staging:
+  stage: test
+  image: node:18-alpine
+  needs: []  # Run tests in parallel with build for faster feedback
+  script:
+    - echo "Running STAGING tests..."
+    - cd DEV/mymovielist
+    - npm ci
+    - echo "Running strict lint..."
+    - npm run lint
+    - echo "Running TypeScript type check..."
+    - npx tsc --noEmit
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging"
+
+smoke_test_staging:
+  stage: test
+  <<: *dockerhub_build
+  needs: ["build_staging"]
+  script:
+    - echo "Running container smoke test..."
+    - echo "Loading pre-built image from artifacts (not from Docker Hub)..."
+    - docker load < docker-images/staging-image.tar
+    - |
+      docker run -d --name smoke-test -p 3000:3000 \
+        -e SUPABASE_URL=$SUPABASE_URL \
+        -e SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY \
+        $DOCKERHUB_IMAGE:staging-$CI_COMMIT_SHORT_SHA
+    - echo "Waiting for container to start..."
+    - sleep 15
+    - apk add --no-cache curl
+    - echo "Running health check..."
+    - curl --retry 5 --retry-delay 3 --fail http://docker:3000 || curl --retry 5 --retry-delay 3 --fail http://localhost:3000
+    - docker stop smoke-test
+    - docker rm smoke-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging"
+
+push_staging:
+  stage: push
+  <<: *dockerhub_build
+  needs: ["build_staging", "test_staging", "smoke_test_staging"]  # Only push after all tests pass
+  script:
+    - echo "All tests passed! Loading and pushing Docker image to Docker Hub..."
+    - docker load < docker-images/staging-image.tar
+    - echo "Re-tagging image with floating tag..."
+    - docker tag $DOCKERHUB_IMAGE:staging-$CI_COMMIT_SHORT_SHA $DOCKERHUB_IMAGE:staging
+    - echo "Pushing to Docker Hub..."
+    - docker push $DOCKERHUB_IMAGE:staging
+    - docker push $DOCKERHUB_IMAGE:staging-$CI_COMMIT_SHORT_SHA
+    - 'echo "STAGING image pushed successfully: $DOCKERHUB_IMAGE:staging-$CI_COMMIT_SHORT_SHA"'
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging"
+
+# Add after push_staging job
+cleanup_staging_images:
+  stage: push
+  image: alpine:latest
+  needs: ["push_staging"]
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - echo "Cleaning up old staging images (keeping 2 most recent)..."
+    - |
+      # Docker Hub API authentication
+      TOKEN=$(curl -s -H "Content-Type: application/json" -X POST \
+        -d '{"username": "'$DOCKER_HUB_USERNAME'", "password": "'$DOCKER_HUB_TOKEN'"}' \
+        https://hub.docker.com/v2/users/login/ | jq -r .token)
+      
+      if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+        echo "ERROR: Failed to authenticate with Docker Hub"
+        exit 1
+      fi
+      
+      echo "Authenticated successfully"
+      
+      # Get all tags starting with 'staging-' (commit-specific tags)
+      TAGS=$(curl -s -H "Content-Type: application/json" -H "Authorization: JWT $TOKEN" \
+        "https://hub.docker.com/v2/repositories/$DOCKER_HUB_USERNAME/mymovielist/tags/?page_size=100" \
+        | jq -r '.results[] | select(.name | startswith("staging-")) | .name' \
+        | sort -r)
+      
+      # Count tags
+      TOTAL_COUNT=$(echo "$TAGS" | wc -l)
+      echo "Found $TOTAL_COUNT staging- tags"
+      
+      # Keep only 2 most recent
+      KEEP_COUNT=2
+      
+      if [ "$TOTAL_COUNT" -le "$KEEP_COUNT" ]; then
+        echo "Not enough images to clean. Keeping all $TOTAL_COUNT images."
+        exit 0
+      fi
+      
+      # Delete old tags (skip first 2)
+      echo "$TAGS" | tail -n +$((KEEP_COUNT + 1)) | while read tag; do
+        echo "Deleting tag: $tag"
+        curl -X DELETE \
+          -H "Authorization: JWT $TOKEN" \
+          "https://hub.docker.com/v2/repositories/$DOCKER_HUB_USERNAME/mymovielist/tags/$tag/" \
+          || echo "Failed to delete $tag"
+      done
+      
+      echo "Cleanup completed"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging"
+  allow_failure: true  # Don't fail pipeline if cleanup fails
+  
+# Auto-merge staging → main after staging pipeline passes
+auto_merge_to_main:
+  stage: deploy
+  image: alpine:latest
+  needs: ["push_staging"]
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI"
+  script:
+    - echo "Auto-merging staging into main..."
+    - git clone --branch main https://oauth2:$GITLAB_API_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git repo
+    - cd repo
+    - git fetch origin staging
+    - git merge origin/staging --no-edit -m "Auto-merge staging to main (Pipeline $CI_PIPELINE_ID)"
+    - git push origin main
+    - echo "Successfully merged staging into main"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging"
+      when: on_success
+
+# =============================================================================
+# PRODUCTION ENVIRONMENT (main branch)
+# =============================================================================
+
+build_production:
+  stage: build
+  <<: *docker_build
+  script:
+    - echo "Building Docker image for PRODUCTION (build only, push after tests)..."
+    # Pull previous image to use as cache (ignore if not exists)
+    - docker pull $DOCKER_IMAGE_BASE:production || true
+    - |
+      docker build \
+        --cache-from $DOCKER_IMAGE_BASE:production \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --build-arg NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL \
+        --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+        --build-arg SUPABASE_URL=$SUPABASE_URL \
+        --build-arg SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY \
+        -t $DOCKER_IMAGE_TAG \
+        -t $DOCKER_IMAGE_BASE:production .
+    # Save image to file for smoke test stage (avoids rebuilding)
+    - mkdir -p docker-images
+    - docker save $DOCKER_IMAGE_TAG > docker-images/production-image.tar
+    - echo "Docker image built successfully (not pushed yet - waiting for tests)"
+  artifacts:
+    paths:
+      - docker-images/production-image.tar
+    expire_in: 1 hour
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+test_production:
+  stage: test
+  image: node:18-alpine
+  needs: []  # Run tests in parallel with build for faster feedback
+  script:
+    - echo "Running PRODUCTION tests..."
+    - cd DEV/mymovielist
+    - npm ci
+    - echo "Running strict lint..."
+    - npm run lint
+    - echo "Running TypeScript type check..."
+    - npx tsc --noEmit
+    - echo "Running security audit (report only)..."
+    - npm audit --audit-level=high || true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+smoke_test_production:
+  stage: test
+  <<: *docker_build
+  needs: ["build_production"]
+  script:
+    - echo "Running container smoke test..."
+    - echo "Loading pre-built image from artifacts (not from registry)..."
+    - docker load < docker-images/production-image.tar
+    - |
+      docker run -d --name smoke-test -p 3000:3000 \
+        -e SUPABASE_URL=$SUPABASE_URL \
+        -e SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY \
+        $DOCKER_IMAGE_TAG
+    - echo "Waiting for container to start..."
+    - sleep 15
+    - apk add --no-cache curl
+    - echo "Running health check..."
+    - curl --retry 5 --retry-delay 3 --fail http://docker:3000 || curl --retry 5 --retry-delay 3 --fail http://localhost:3000
+    - docker stop smoke-test
+    - docker rm smoke-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# Push to GCP after tests pass (automatic, no approval needed)
+push_production:
+  stage: push
+  <<: *docker_build
+  needs: ["build_production", "test_production", "smoke_test_production"]  # Only push after all tests pass
+  script:
+    - echo "All tests passed! Loading and pushing Docker image to GCP..."
+    - docker load < docker-images/production-image.tar
+    - echo "Re-tagging image with production tag..."
+    - docker tag $DOCKER_IMAGE_TAG $DOCKER_IMAGE_BASE:production
+    - echo "Pushing to GCP..."
+    - docker push $DOCKER_IMAGE_TAG
+    - docker push $DOCKER_IMAGE_BASE:production
+    - 'echo "PRODUCTION image pushed successfully: $DOCKER_IMAGE_TAG"'
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+cleanup_production_images:
+  stage: push
+  <<: *gcloud_setup
+  needs: ["push_production"]
+  script:
+    - echo "Cleaning up old production images..."
+    - |
+      # 1. Get the digest of the current :production tag (NEVER DELETE)
+      PRODUCTION_DIGEST=$(gcloud artifacts docker images describe $DOCKER_IMAGE_BASE:production --format="value(image_summary.digest)")
+      echo "Protected digest (current production): $PRODUCTION_DIGEST"
+      
+      # 2. List all digests, sorted by creation time (oldest first)
+      ALL_DIGESTS=$(gcloud artifacts docker images list $DOCKER_IMAGE_BASE \
+        --include-tags \
+        --format="value(digest)" \
+        --sort-by="createTime")
+      
+      # 3. Count total images
+      TOTAL_COUNT=$(echo "$ALL_DIGESTS" | wc -l)
+      echo "Total images found: $TOTAL_COUNT"
+      
+      # 4. Keep last N versions (e.g., 3 for rollback capability)
+      KEEP_COUNT=1
+      
+      if [ "$TOTAL_COUNT" -le "$KEEP_COUNT" ]; then
+        echo "Not enough images to clean. Keeping all $TOTAL_COUNT images."
+        exit 0
+      fi
+      
+      # 5. Calculate how many to delete
+      DELETE_COUNT=$((TOTAL_COUNT - KEEP_COUNT))
+      echo "Will delete oldest $DELETE_COUNT images"
+      
+      # 6. Delete oldest digests (but skip production)
+      echo "$ALL_DIGESTS" | head -n $DELETE_COUNT | while read digest; do
+        if [ "$digest" = "$PRODUCTION_DIGEST" ]; then
+          echo "Skipping $digest (currently tagged as :production)"
+        else
+          echo "Deleting old image: $digest"
+          gcloud artifacts docker images delete "$DOCKER_IMAGE_BASE@$digest" --delete-tags --quiet || true
+        fi
+      done
+      
+      echo "Cleanup completed successfully"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+# =============================================================================
+# CANARY DEPLOYMENT (Deploy Pattern)
+# =============================================================================
+# Canary deployment deploys the new version with only 10% of traffic initially.
+# This allows testing in production with real users while minimizing risk.
+# If issues are detected, traffic can be rolled back instantly.
+# =============================================================================
+
+# Deploy canary version with 10% traffic
+deploy_canary:
+  stage: deploy
+  <<: *gcloud_setup
+  needs: ["push_production"]
+  script:
+    - echo "Deploying CANARY version..."
+    - apk add --no-cache curl
+    
+    # Check if service already exists
+    - |
+      if gcloud run services describe my-web-app --region=$GCP_REGION --format="value(status.url)" 2>/dev/null; then
+        echo "Service exists - deploying as canary with traffic split"
+        SERVICE_EXISTS=true
+      else
+        echo "Service does not exist - will create with 100% traffic (first deployment)"
+        SERVICE_EXISTS=false
+      fi
+    
+    # Deploy based on whether service exists
+    - |
+      if [ "$SERVICE_EXISTS" = "true" ]; then
+        # Existing service: deploy with no-traffic, then split
+        echo "Deploying new revision with --no-traffic flag..."
+        gcloud run deploy my-web-app \
+          --image $DOCKER_IMAGE_BASE:production \
+          --region $GCP_REGION \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 3000 \
+          --no-traffic \
+          --tag canary \
+          --set-env-vars SUPABASE_URL=$SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+        
+        echo "Routing 10% of traffic to canary..."
+        gcloud run services update-traffic my-web-app \
+          --region=$GCP_REGION \
+          --to-tags=canary=10
+        
+        echo "Canary deployed successfully"
+        echo "Current traffic split:"
+        echo "   - 10% to CANARY (new version)"
+        echo "   - 90% to STABLE (previous version)"
+      else
+        # New service: deploy normally (first time)
+        echo "Creating new service (first deployment)..."
+        gcloud run deploy my-web-app \
+          --image $DOCKER_IMAGE_BASE:production \
+          --region $GCP_REGION \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 3000 \
+          --set-env-vars SUPABASE_URL=$SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+        
+        echo "Service created successfully"
+        echo "First deployment - 100% traffic to this version"
+        echo "Next deployments will use canary (10% to 100%) strategy"
+      fi
+    
+    - echo "Monitor the canary and then run promote_canary to send 100% traffic to the new version."
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual  # MANUAL: Click to deploy canary
+  allow_failure: false
+
+# Promote canary to receive 100% traffic
+promote_canary:
+  stage: deploy
+  <<: *gcloud_setup
+  needs: ["deploy_canary"]
+  script:
+    - echo "Promoting CANARY to 100% traffic..."
+    - echo "Switching all traffic to the latest revision..."
+    - |
+      gcloud run services update-traffic my-web-app \
+        --region=$GCP_REGION \
+        --to-latest
+    - echo "Canary promoted successfully"
+    - echo "All traffic (100%) now going to the new version"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual  # MANUAL: Click to promote after validating canary
+  allow_failure: false
+
+# Health check after canary promotion to 100% traffic
+validate_promotion:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  <<: *gcloud_setup
+  needs: ["promote_canary"]
+  variables:
+    MAX_RESPONSE_TIME_MS: "3000"       # 3 seconds max response time
+    ERROR_THRESHOLD_PERCENT: "15"      # 15% error rate triggers rollback
+    TOTAL_CHECKS: "10"                 # Number of health checks
+    CHECK_INTERVAL_SECONDS: "3"        # Time between checks
+  script:
+    - apk add --no-cache curl
+    - |
+      echo "POST-PROMOTION HEALTH CHECK"
+      echo "================================================"
+      echo "Configuration:"
+      echo "   Max Response Time: ${MAX_RESPONSE_TIME_MS}ms"
+      echo "   Error Threshold: ${ERROR_THRESHOLD_PERCENT}%"
+      echo "   Total Checks: ${TOTAL_CHECKS}"
+      echo "================================================"
+      
+      # Get service URL
+      SERVICE_URL=$(gcloud run services describe my-web-app --region=$GCP_REGION --format="value(status.url)")
+      echo "Service URL: $SERVICE_URL"
+      echo ""
+      echo "Starting Health Checks..."
+      echo "================================================"
+      
+      # Health Check Loop
+      FAILED_CHECKS=0
+      TOTAL_RESPONSE_TIME=0
+      
+      for i in $(seq 1 $TOTAL_CHECKS); do
+        echo ""
+        echo "--- Health Check $i/$TOTAL_CHECKS ---"
+        
+        # Use curl's time_total for sub-second timing (portable on Alpine)
+        CURL_OUT=$(curl -s -o /dev/null -w "%{http_code} %{time_total}" --max-time 10 "$SERVICE_URL" 2>/dev/null || echo "000 0")
+        HTTP_STATUS=$(printf "%s" "$CURL_OUT" | awk '{print $1}')
+        TIME_TOTAL=$(printf "%s" "$CURL_OUT" | awk '{print $2}')
+        RESPONSE_TIME=$(awk -v t="$TIME_TOTAL" 'BEGIN{printf "%d", t * 1000}')
+        TOTAL_RESPONSE_TIME=$((TOTAL_RESPONSE_TIME + RESPONSE_TIME))
+        
+        echo "   HTTP Status: $HTTP_STATUS"
+        echo "   Response Time: ${RESPONSE_TIME}ms"
+        
+        if [ "$HTTP_STATUS" != "200" ]; then
+          echo "   FAILED: Non-200 status code"
+          FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        elif [ "$RESPONSE_TIME" -gt "$MAX_RESPONSE_TIME_MS" ]; then
+          echo "   WARNING: Response time exceeded ${MAX_RESPONSE_TIME_MS}ms"
+          FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        else
+          echo "   PASSED"
+        fi
+        
+        sleep $CHECK_INTERVAL_SECONDS
+      done
+      
+      echo ""
+      echo "================================================"
+      echo "POST-PROMOTION HEALTH CHECK RESULTS"
+      echo "================================================"
+      
+      AVG_RESPONSE_TIME=$((TOTAL_RESPONSE_TIME / TOTAL_CHECKS))
+      ERROR_RATE=$((FAILED_CHECKS * 100 / TOTAL_CHECKS))
+      
+      echo "   Total Checks: $TOTAL_CHECKS"
+      echo "   Failed Checks: $FAILED_CHECKS"
+      echo "   Error Rate: ${ERROR_RATE}%"
+      echo "   Avg Response Time: ${AVG_RESPONSE_TIME}ms"
+      echo ""
+      
+      # Decision: Rollback or Pass
+      if [ "$ERROR_RATE" -ge "$ERROR_THRESHOLD_PERCENT" ]; then
+        echo "ERROR RATE TOO HIGH (${ERROR_RATE}% >= ${ERROR_THRESHOLD_PERCENT}%)"
+        echo ""
+        echo "    DEPLOYMENT FAILED - Service unhealthy after promotion!"
+        echo "Manual rollback required:"
+        echo "   1. Run 'rollback_production' job"
+        echo "   2. Investigate logs"
+        echo "   3. Fix and redeploy"
+        exit 1
+      else
+        echo "   POST-PROMOTION VALIDATION PASSED"
+        echo "   Error rate (${ERROR_RATE}%) is below threshold (${ERROR_THRESHOLD_PERCENT}%)"
+        echo ""
+        echo "Deployment successful - service is healthy!"
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success  # Runs automatically after promote_canary
+  allow_failure: false
+
+# =============================================================================
+# ROLLBACK STRATEGY (Re-deploy Previous Version)
+# =============================================================================
+# This job allows instant rollback to the previous stable version.
+# Cloud Run keeps revision history, so we can switch traffic without rebuilding.
+# This is a MANUAL job - human judgment is required before rollback.
+# =============================================================================
+
+# Rollback to previous revision
+rollback_production:
+  stage: deploy
+  <<: *gcloud_setup
+  needs: []  # Can run independently, no dependencies
+  script:
+    - |
+      echo "INITIATING ROLLBACK TO PREVIOUS REVISION"
+      echo "Fetching revision history..."
+      
+      # List all revisions sorted by creation time (newest first)
+      gcloud run revisions list --service=my-web-app --region=$GCP_REGION --format="table(name,creationTimestamp,status.conditions[0].status)" --sort-by="~creationTimestamp" --limit=5
+      
+      echo ""
+      echo "Identifying previous stable revision..."
+      
+      # Get the second most recent revision (the one before current)
+      PREVIOUS_REVISION=$(gcloud run revisions list --service=my-web-app --region=$GCP_REGION --format="value(name)" --sort-by="~creationTimestamp" --limit=2 | tail -1)
+      
+      echo "Rolling back to revision: $PREVIOUS_REVISION"
+      
+      # Route 100% traffic to the previous revision
+      gcloud run services update-traffic my-web-app --region=$GCP_REGION --to-revisions=$PREVIOUS_REVISION=100
+      
+      echo ""
+      echo "ROLLBACK COMPLETE"
+      echo "All traffic (100%) now going to older version"
+      echo ""
+      echo "Verify the rollback:"
+      gcloud run services describe my-web-app --region=$GCP_REGION --format="value(status.traffic)"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual  # MANUAL: Emergency rollback - requires human judgment
+  allow_failure: false
+
+# =============================================================================
+# POST-DEPLOYMENT
+# =============================================================================
+
+# Push latest tag after successful canary promotion
+tag_latest:
+  stage: deploy
+  <<: *docker_build
+  needs: ["push_production", "promote_canary"]
+  script:
+    - echo "Tagging production image as latest..."
+    - docker pull $DOCKER_IMAGE_TAG  # Pull from GCP instead of loading artifact
+    - docker tag $DOCKER_IMAGE_TAG $DOCKER_IMAGE_BASE:latest
+    - docker push $DOCKER_IMAGE_BASE:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success

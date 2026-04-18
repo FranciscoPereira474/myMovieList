@@ -1,0 +1,429 @@
+.page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  color: #e6eef8;
+  font-family: inherit;
+  overflow-x: hidden;
+}
+
+/* Layout principal */
+.container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2.5rem;
+  padding: 3rem 4rem;
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.posterSection {
+  position: sticky;
+  top: 2rem;
+}
+
+.posterSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.poster {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+.ratingSection {
+  margin-top: 1rem;
+}
+
+.posterStats {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statValue {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Cabeçalho do filme */
+.title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-primary, #e6eef8);
+  margin-bottom: 0.4rem;
+}
+
+.metadata {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.dot {
+  color: rgba(230, 238, 248, 0.3);
+}
+
+/* Equipa técnica */
+.crew {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem 0;
+}
+
+.crew p {
+  margin: 0.3rem 0;
+  color: var(--text-primary, #e6eef8);
+}
+
+.crew strong {
+  color: var(--text-strong, #f3f6fa);
+}
+
+/* Descrição */
+.description h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.8rem;
+  color: var(--text-primary, #e6eef8);
+}
+
+.description p {
+  line-height: 1.7;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* Section (Genres and Cast) */
+.section {
+  width: 100%;
+  padding: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.section:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+}
+
+.section h3 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.genreTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.genreTag {
+  padding: 0.5rem 1rem;
+  background: color-mix(in srgb, var(--accent-start) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-start) 30%, transparent);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.genreTag:hover {
+  background: color-mix(in srgb, var(--accent-start) 25%, transparent);
+  border-color: var(--accent-start);
+  transform: translateY(-1px);
+}
+
+/* Cast Section */
+.castList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.castMember {
+  padding: 0.5rem 1rem;
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.castMember:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+/* Reviews Section */
+.reviewsSection {
+  width: 100%;
+  padding: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.reviewsSection:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.reviewsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.reviewsHeader h2 {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin: 0;
+}
+
+.moreLink {
+  color: var(--accent-start);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.moreLink:hover {
+  color: var(--accent-end);
+  text-decoration: underline;
+}
+
+.reviewsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.comingSoon {
+  color: var(--muted);
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Write Review Section */
+.writeReview {
+  margin-top: 2rem;
+  width: 100%;
+  padding: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.writeReview:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.reviewTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.reviewForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reviewTextarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.8rem;
+  background-color: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.reviewTextarea:focus {
+  outline: none;
+}
+
+.reviewTextarea::placeholder {
+  color: var(--muted);
+}
+
+.reviewFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.8rem;
+}
+
+.postError {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-right: 1rem;
+}
+
+.postButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  color: var(--bg);
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  font-weight: 600;
+  font-size: 15px;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.postButton:active {
+  transform: translateY(1px);
+}
+
+.postButton:disabled {
+  opacity: 0.75;
+  cursor: progress;
+  transform: none;
+}
+
+.loginMessage {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loginMessage p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.loginMessage a {
+  color: var(--accent-start);
+  text-decoration: underline;
+}
+
+/* Loading & Error */
+.loading,
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  font-size: 1.2rem;
+  color: var(--text-primary, #e6eef8);
+}
+
+.error {
+  color: var(--danger);
+}
+
+/* Responsivo */
+@media (max-width: 1024px) {
+  .container {
+    grid-template-columns: 1fr;
+    padding: 2rem;
+    gap: 2rem;
+  }
+
+  .posterSection {
+    position: static;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+
+  .genreTags {
+    justify-content: center;
+  }
+}
+
+/* Correção de cor global para subcomponentes */
+.infoSection h1,
+.infoSection h2,
+.infoSection label {
+  color: var(--text-primary, #e6eef8) !important;
+}
+
+.infoSection strong {
+  color: var(--text-strong, #f3f6fa) !important;
+  font-weight: 600;
+}

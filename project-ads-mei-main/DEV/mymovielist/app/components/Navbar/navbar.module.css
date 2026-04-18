@@ -1,0 +1,332 @@
+.navbarWrapper{
+  width:100%;
+  background: var(--footer);
+  box-shadow: var(--shadow);
+}
+
+.navbar{
+  max-width:1920px;
+  min-height: 80px;
+  padding:1rem 5rem;
+  position:relative;
+  display:flex;
+  flex-wrap: wrap;
+  justify-content:space-between;
+  align-items:center;
+  color: var(--text-primary);
+  margin: 0 auto;
+  gap: 1rem;
+}
+
+.navLogo{
+  margin-right: 1rem;
+  display:flex;
+  align-items:center;
+  font-size:1.5rem;
+  font-weight:600;
+  color: var(--text-primary);
+  text-decoration:none;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.navLogo:hover{
+  color: var(--accent-start);
+  transform: scale(1.1);
+}
+
+.navButtonActive{
+  background: var(--gradient-accent);
+  border-color: transparent;
+  color: var(--text-primary);
+}
+
+.navSearch{
+  display:flex;
+  align-items:center;
+  padding: 4px;
+  border-radius: var(--radius);
+  border: 1px solid var(--muted);
+  padding-left: 8px;
+}
+
+.navSearch:hover{
+  border: 1px solid var(--accent-start);
+}
+
+.search{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.search svg{
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.searchBarWrapper{
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+  background: var(--bg);
+  padding:6px;
+  border-radius: var(--radius);
+  border:1px solid rgba(255,255,255,0.03);
+}
+
+.navSearch input{
+  background: transparent;
+  color: var(--muted);
+  padding:6px 8px;
+  min-width: 200px;
+  outline : none;
+  border : none;
+}
+.navSearch input::placeholder{ color: var(--muted); }
+
+.navUser{
+  display:flex;
+  align-items:center;
+  gap:0.6rem;
+}
+
+.userIcon{
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: var(--radius);
+  background: var(--bg);;
+}
+
+.navLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.navLink:hover {
+  color: var(--accent-start);
+}
+
+.navLink:not(.userLink):hover {
+  transform: scale(1.1);
+}
+
+.navLink:hover svg:not(.userIcon) {
+  fill: var(--accent-start) !important;
+}
+
+.navLink:hover svg:not(.userIcon) path {
+  fill: var(--accent-start) !important;
+}
+
+.navLink svg:not(.userIcon) {
+  fill: var(--muted);
+  transition: fill 0.3s;
+  display: none;
+}
+
+.navLink p {
+  display: block;
+}
+
+.navLinks{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+}
+
+.navUserSection{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.userIcon {
+  width: 30px;
+  height: 30px;
+}
+
+.navLogout {
+  background: var(--bg);;
+  border: 1px solid var(--bg);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.navLogout:hover{
+  color: var(--accent-start);
+  transform: scale(1.1);
+  border-radius: var(--radius);
+}
+
+.logoutButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoutButton:hover {
+  transform: scale(1.1);
+}
+
+.logoutIcon {
+  fill: var(--muted);
+  transition: fill 0.3s;
+}
+
+.logoutButton:hover .logoutIcon {
+  fill: red; 
+}
+
+.content{
+  padding:1.25rem;
+  color: var(--bg);
+}
+
+.navbar.loggedOut {
+  justify-content: space-between;
+}
+
+.navLinksLoggedOut {
+  gap: 2rem;
+}
+
+/* responsiveness  LOGGED OUT  */
+@media (max-width: 840px) {
+  .navbar.loggedOut .navLink p {
+    display: none;
+  }
+
+  .navbar.loggedOut .navLink svg {
+    display: block;
+  }
+}
+
+@media (max-width: 785px) {
+  .navbar.loggedOut {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .navbar.loggedOut .navLogo {
+    align-self: center;
+  }
+
+  .navbar.loggedOut .navLinks {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* responsiveness  LOGGED IN  */
+/* labels touch logo -> hide labels, show icons */
+@media (max-width: 1326px) {
+  .navbar.loggedIn .navLink p {
+    display: none;
+  }
+
+  .navbar.loggedIn .navLink svg {
+    display: block;
+  }
+
+}
+
+/* out of space -> hide username */
+@media (max-width: 1040px) {
+  .userName {
+    display: none;
+  }
+  
+  .navUser {
+    justify-content: center;
+  }
+}
+
+/* first line out of space again -> wrap to next line, show lables and hide icons */
+@media (max-width: 850px) {
+  .navbar.loggedIn {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .navbar.loggedIn .navLogo {
+    order: 1;
+    align-self: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .navbar.loggedIn .navLinks {
+    order: 2;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .navbar.loggedIn .navLink svg:not(.userIcon) {
+    display: none;
+  }
+
+  .navbar.loggedIn .navLink p {
+    display: block;
+  }
+
+  .navbar.loggedIn .navUserSection {
+    order: 4;
+  }
+}
+
+/* second line out of space -> place search bar at bottom */
+@media (max-width: 790px) {
+  .navbar.loggedIn .navSearch {
+    order: 999;
+    flex-basis: 100%;
+  }
+  
+  .navbar.loggedIn .navSearch input {
+    max-width: 400px;
+  }
+
+}
+
+/* second line out of space, again -> hide labels, show icons */
+@media (max-width: 540px) {
+  .navbar.loggedIn .navLink svg:not(.userIcon) {
+    display: block;
+  }
+
+  .navbar.loggedIn .navLink p {
+    display: none;
+  }
+}
+
+/* second line out of space, again -> reduce padding */
+@media (max-width: 480px) {
+  .navbar{
+    padding: 1rem 1rem;
+  }
+}

@@ -1,0 +1,100 @@
+.moviePage {
+  padding: 1rem 5rem;
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.leftArea {
+  width: 400px;
+}
+
+.movieCard {
+  width: 100%;
+}
+
+.rightArea {
+  width: 1200px;
+}
+
+.titleAndYearContainer {
+  display: flex;
+  align-items: last baseline;
+  gap: 2rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.releaseYear {
+  font-size: 2rem;
+  font-weight: 500;
+}
+
+.credits {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.director {
+  font-weight: 600;
+}
+
+.description {
+  display: block;
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+.genres,
+.actors,
+.popularReviews,
+.recentReviews,
+.writeReview {
+  margin-top: 1.5rem;
+}
+
+.genres h3,
+.actors h3,
+.writeReview h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  border-bottom: black 2px solid;
+  cursor: default;
+}
+
+.genres ul,
+.actors ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.genres li,
+.actors li {
+  background-color: #ccc;
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: default;
+
+  -webkit-box-shadow: 0px 0px 3px 0px #000000; 
+  box-shadow: 0px 0px 3px 0px #000000;
+}
+
+.popularReviews .link,
+.recentReviews .link {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  border-bottom: black 2px solid;
+}

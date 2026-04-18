@@ -1,0 +1,87 @@
+div .filter-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 5px;
+}
+
+
+.movie-search-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 4%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 98%, white 2%), color-mix(in srgb, var(--bg) 99%, white 1%));
+  color: var(--text-primary);
+  outline: none;
+  font-size: 14px;
+  transition: box-shadow 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--bg) 99%, white 1%);
+
+  margin: 0 5px 5px 5px;
+}
+
+.movie-search-input::placeholder {
+  color: color-mix(in srgb, var(--text-primary) 40%, transparent);
+}
+
+.movie-search-input:hover {
+  border: 1px solid var(--accent-start);
+}
+
+/* Buttons */
+button.apply-filters-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem auto;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  
+  cursor: pointer;
+  color: var(--bg);
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  font-weight: 600;
+  font-size: 15px;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+button.apply-filters-button:active {
+  transform: translateY(1px);
+}
+
+button.apply-filters-button[disabled] {
+  opacity: 0.75;
+  cursor: progress;
+  transform: none;
+}
+
+.filter-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem auto;
+}
+
+button.apply-filters-button {
+  margin: 0;
+}
+
+button.clear-filters-button {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  background: none;
+  text-decoration: underline;
+  font-weight: 400;
+  font-size: 13px;
+  transition: color 0.12s ease;
+}
+
+button.clear-filters-button:hover {
+  color: var(--accent-start);
+}

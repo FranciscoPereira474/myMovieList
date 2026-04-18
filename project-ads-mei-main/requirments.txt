@@ -1,0 +1,4 @@
+// nao fazem nada, apenas para vermos o que é preciso instalar
+
+npm install nuqs
+npm install @mdi/react @mdi/js

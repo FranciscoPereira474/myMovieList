@@ -1,0 +1,299 @@
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.reviewCard:hover {
+  border-color: var(--accent-start);
+  box-shadow: var(--shadow);
+}
+
+.reviewHeader {
+  display: flex;
+  gap: 1rem;
+}
+
+.movieInfo {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.movieImage {
+  flex-shrink: 0;
+  width: 100px;
+  height: 150px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.movieImage:hover {
+  transform: scale(1.05);
+}
+
+.movieImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userAndMovie {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.userAvatar svg {
+  fill: var(--muted);
+}
+
+.username {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.3s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.username:hover {
+  color: var(--accent-start);
+}
+
+.reviewDate {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-left: auto;
+}
+
+.movieTitleSection {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.movieTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.movieTitle:hover {
+  color: var(--accent-start);
+}
+
+.releaseYear {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.ratingSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stars {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 1.5rem;
+}
+
+.starFilled {
+  color: var(--accent-start);
+}
+
+.starEmpty {
+  color: var(--muted);
+}
+
+.commentCount {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+
+.commentCount svg {
+  fill: var(--muted);
+}
+
+.reviewText {
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  margin: 0.5rem 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s;
+  hyphens: auto;
+}
+
+.reviewText:hover {
+  color: var(--accent-start);
+}
+
+.reviewFooter {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+
+}
+
+.likeSection,
+.dislikeSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.likeSection:hover,
+.dislikeSection:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.likeSection svg,
+.dislikeSection svg {
+  fill: var(--text-primary);
+  transition: fill 0.3s;
+}
+
+.likeSection.active,
+.dislikeSection.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--accent-start);
+}
+
+.likeSection.active svg,
+.dislikeSection.active svg {
+  fill: var(--accent-start);
+}
+
+.commentCount {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.commentCount svg {
+  fill: var(--text-primary);
+}
+
+.loading,
+.error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.error {
+  color: red;
+}
+
+/* Responsive */
+@media (max-width: 1205px) {
+  .username {
+    max-width: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .reviewCard {
+    padding: 1rem;
+  }
+
+  .movieImage {
+    width: 80px;
+    height: 120px;
+  }
+
+  .movieTitle {
+    font-size: 1.1rem;
+  }
+
+  .userSection {
+    flex-wrap: wrap;
+  }
+
+  .reviewDate {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  .stars {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .movieInfo {
+    flex-direction: column;
+  }
+
+  .movieImage {
+    width: 100%;
+    height: 200px;
+  }
+
+  .reviewFooter {
+    flex-wrap: wrap;
+  }
+
+
+}

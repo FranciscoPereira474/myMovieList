@@ -1,0 +1,40 @@
+.userCorner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userCorner svg {
+  fill: #cccccc;
+  transition: fill 0.3s;
+}
+
+.userCorner h2 {
+  transition: color 0.3s;
+}
+
+.userCorner:hover svg {
+  fill: white;
+}
+
+.userCorner:hover h2 {
+  color: white;
+}
+
+@media (max-width: 1200px) {
+  .userCorner h2 {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .userCorner h2{
+    display: inline;
+  }
+}
+
+@media (max-width: 650px) {
+  .userCorner h2{
+    display: none;
+  }
+}

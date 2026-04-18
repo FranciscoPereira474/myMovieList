@@ -1,0 +1,342 @@
+# =============================================================================
+# AUTOMATED ROLLBACK PIPELINE
+# =============================================================================
+# 
+# This file contains the rollback strategy for the MyMovieList application.
+# It can be included in the main .gitlab-ci.yml or used as reference.
+#
+# Features:
+# - Automated health check validation after canary deployment
+# - Automatic rollback on failure (no manual intervention)
+# - Manual emergency rollback option
+# - Fast traffic switching (no rebuild required)
+#
+# =============================================================================
+
+# =============================================================================
+# AUTOMATED HEALTH CHECK & ROLLBACK
+# =============================================================================
+# Runs health checks on the canary deployment.
+# If checks fail → AUTOMATIC rollback (no manual intervention needed)
+# 
+# Triggers for automatic rollback:
+# - HTTP failures (non-200 status codes)
+# - Response time degradation (> MAX_RESPONSE_TIME_MS)
+# - Error rate exceeds threshold (> ERROR_THRESHOLD_PERCENT)
+# =============================================================================
+
+# =============================================================================
+# TEST HEALTH CHECKS (Dry Run - No Rollback)
+# =============================================================================
+# Use this to test health check logic without triggering any rollback.
+# Safe to run anytime - only reports results.
+# =============================================================================
+
+test_health_checks:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo "$GCP_SA_KEY" > gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file=gcloud-service-key.json
+    - gcloud config set project $GCP_PROJECT_ID
+  needs: []  # Can run independently
+  variables:
+    MAX_RESPONSE_TIME_MS: "3000"
+    ERROR_THRESHOLD_PERCENT: "10"
+    TOTAL_CHECKS: "5"
+    CHECK_INTERVAL_SECONDS: "2"
+  script:
+    - apk add --no-cache curl
+    - echo "HEALTH CHECK TEST (DRY RUN - NO ROLLBACK)"
+    - echo "================================================"
+    - echo "This is a TEST ONLY - no rollback will occur"
+    - echo "================================================"
+    - echo ""
+    - echo "Configuration:"
+    - 'echo "   Max Response Time: ${MAX_RESPONSE_TIME_MS}ms"'
+    - 'echo "   Error Threshold: ${ERROR_THRESHOLD_PERCENT}%"'
+    - 'echo "   Total Checks: ${TOTAL_CHECKS}"'
+    - echo ""
+    
+    # Get the service URL
+    - |
+      SERVICE_URL=$(gcloud run services describe my-web-app \
+        --region=$GCP_REGION \
+        --format="value(status.url)")
+      echo "Service URL: $SERVICE_URL"
+    
+    # List revisions
+    - echo ""
+    - echo "Current Revisions:"
+    - |
+      gcloud run revisions list \
+        --service=my-web-app \
+        --region=$GCP_REGION \
+        --format="table(name,status.conditions[0].status)" \
+        --sort-by="~creationTimestamp" \
+        --limit=3
+    
+    - echo ""
+    - echo "Running Health Checks..."
+    - echo "================================================"
+    
+    # Health Check Loop
+    - |
+      FAILED_CHECKS=0
+      TOTAL_RESPONSE_TIME=0
+      
+      for i in $(seq 1 $TOTAL_CHECKS); do
+        echo ""
+        echo "--- Health Check $i/$TOTAL_CHECKS ---"
+        
+        # Use curl's time_total for sub-second timing (portable on Alpine)
+        CURL_OUT=$(curl -s -o /dev/null -w "%{http_code} %{time_total}" --max-time 10 "$SERVICE_URL" 2>/dev/null || echo "000 0")
+        HTTP_STATUS=$(printf "%s" "$CURL_OUT" | awk '{print $1}')
+        TIME_TOTAL=$(printf "%s" "$CURL_OUT" | awk '{print $2}')
+        RESPONSE_TIME=$(awk -v t="$TIME_TOTAL" 'BEGIN{printf "%d", t * 1000}')
+        TOTAL_RESPONSE_TIME=$((TOTAL_RESPONSE_TIME + RESPONSE_TIME))
+        
+        echo "   HTTP Status: $HTTP_STATUS"
+        echo "   Response Time: ${RESPONSE_TIME}ms"
+        
+        if [ "$HTTP_STATUS" != "200" ]; then
+          echo "   FAILED: Non-200 status code"
+          FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        elif [ "$RESPONSE_TIME" -gt "$MAX_RESPONSE_TIME_MS" ]; then
+          echo "   SLOW: Response time exceeded ${MAX_RESPONSE_TIME_MS}ms"
+          FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        else
+          echo "   PASSED"
+        fi
+        
+        sleep $CHECK_INTERVAL_SECONDS
+      done
+    
+    - echo ""
+    - echo "================================================"
+    - echo "TEST RESULTS"
+    - echo "================================================"
+    - |
+      AVG_RESPONSE_TIME=$((TOTAL_RESPONSE_TIME / TOTAL_CHECKS))
+      ERROR_RATE=$((FAILED_CHECKS * 100 / TOTAL_CHECKS))
+      
+      echo "   Total Checks: $TOTAL_CHECKS"
+      echo "   Failed Checks: $FAILED_CHECKS"
+      echo "   Error Rate: ${ERROR_RATE}%"
+      echo "   Avg Response Time: ${AVG_RESPONSE_TIME}ms"
+      echo ""
+      
+      if [ "$ERROR_RATE" -ge "$ERROR_THRESHOLD_PERCENT" ]; then
+        echo "WOULD TRIGGER ROLLBACK (${ERROR_RATE}% >= ${ERROR_THRESHOLD_PERCENT}%)"
+        echo "But this is a dry run - no action taken"
+      else
+        echo "WOULD PASS VALIDATION (${ERROR_RATE}% < ${ERROR_THRESHOLD_PERCENT}%)"
+        echo "   Service is healthy!"
+      fi
+    
+    - echo ""
+    - echo "================================================"
+    - echo "TEST COMPLETE - No changes made"
+    - echo "================================================"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual  # Manual trigger - safe to run anytime
+  allow_failure: true  # Won't block pipeline
+
+
+validate_canary:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo "$GCP_SA_KEY" > gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file=gcloud-service-key.json
+    - gcloud config set project $GCP_PROJECT_ID
+  needs: ["deploy_canary"]
+  variables:
+    # Configurable thresholds for production
+    MAX_RESPONSE_TIME_MS: "3000"       # 3 seconds max response time
+    ERROR_THRESHOLD_PERCENT: "20"      # 20% error rate triggers rollback
+    TOTAL_CHECKS: "10"                 # Number of health checks to perform
+    CHECK_INTERVAL_SECONDS: "3"        # Time between checks
+  script:
+    - apk add --no-cache curl jq bc
+    - |
+      echo "AUTOMATED CANARY VALIDATION"
+      echo "================================================"
+      echo "Configuration:"
+      echo "   Max Response Time: ${MAX_RESPONSE_TIME_MS}ms"
+      echo "   Error Threshold: ${ERROR_THRESHOLD_PERCENT}%"
+      echo "   Total Checks: ${TOTAL_CHECKS}"
+      echo "================================================"
+      
+      # Get the canary URL
+      CANARY_URL=$(gcloud run services describe my-web-app --region=$GCP_REGION --format="value(status.traffic[].url)" | tr ';' '\n' | grep canary | head -1)
+      
+      if [ -z "$CANARY_URL" ]; then
+        CANARY_URL=$(gcloud run services describe my-web-app --region=$GCP_REGION --format="value(status.url)")
+      fi
+      echo "Canary URL: $CANARY_URL"
+      
+      # Store previous revision for potential rollback
+      PREVIOUS_REVISION=$(gcloud run revisions list --service=my-web-app --region=$GCP_REGION --format="value(name)" --sort-by="~creationTimestamp" --limit=2 | tail -1)
+      echo "Previous stable revision: $PREVIOUS_REVISION"
+      
+      echo ""
+      echo "Starting Health Checks..."
+      echo "================================================"
+      
+      # Health Check Loop
+      FAILED_CHECKS=0
+      TOTAL_RESPONSE_TIME=0
+      
+      for i in $(seq 1 $TOTAL_CHECKS); do
+        echo ""
+        echo "--- Health Check $i/$TOTAL_CHECKS ---"
+        
+        # Use curl's time_total for sub-second timing (portable on Alpine)
+        CURL_OUT=$(curl -s -o /dev/null -w "%{http_code} %{time_total}" --max-time 10 "$CANARY_URL" 2>/dev/null || echo "000 0")
+        HTTP_STATUS=$(printf "%s" "$CURL_OUT" | awk '{print $1}')
+        TIME_TOTAL=$(printf "%s" "$CURL_OUT" | awk '{print $2}')
+        RESPONSE_TIME=$(awk -v t="$TIME_TOTAL" 'BEGIN{printf "%d", t * 1000}')
+        TOTAL_RESPONSE_TIME=$((TOTAL_RESPONSE_TIME + RESPONSE_TIME))
+        
+        echo "   HTTP Status: $HTTP_STATUS"
+        echo "   Response Time: ${RESPONSE_TIME}ms"
+        
+        # Check for failures
+        if [ "$HTTP_STATUS" != "200" ]; then
+          echo "   FAILED: Non-200 status code"
+          FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        elif [ "$RESPONSE_TIME" -gt "$MAX_RESPONSE_TIME_MS" ]; then
+          echo "   WARNING: Response time exceeded ${MAX_RESPONSE_TIME_MS}ms"
+          FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        else
+          echo "   PASSED"
+        fi
+        
+        sleep $CHECK_INTERVAL_SECONDS
+      done
+      
+      echo ""
+      echo "================================================"
+      echo "HEALTH CHECK RESULTS"
+      echo "================================================"
+      
+      AVG_RESPONSE_TIME=$((TOTAL_RESPONSE_TIME / TOTAL_CHECKS))
+      ERROR_RATE=$((FAILED_CHECKS * 100 / TOTAL_CHECKS))
+      
+      echo "   Total Checks: $TOTAL_CHECKS"
+      echo "   Failed Checks: $FAILED_CHECKS"
+      echo "   Error Rate: ${ERROR_RATE}%"
+      echo "   Avg Response Time: ${AVG_RESPONSE_TIME}ms"
+      echo ""
+      
+      # Decision: Rollback or Continue
+      if [ "$ERROR_RATE" -ge "$ERROR_THRESHOLD_PERCENT" ]; then
+        echo "ERROR RATE TOO HIGH (${ERROR_RATE}% >= ${ERROR_THRESHOLD_PERCENT}%)"
+        echo ""
+        echo "INITIATING AUTOMATIC ROLLBACK..."
+        echo "================================================"
+        
+        # Perform automatic rollback
+        gcloud run services update-traffic my-web-app --region=$GCP_REGION --to-revisions=$PREVIOUS_REVISION=100
+        
+        echo ""
+        echo "AUTOMATIC ROLLBACK COMPLETE"
+        echo "All traffic restored to: $PREVIOUS_REVISION"
+        echo ""
+        echo "Current service status:"
+        gcloud run services describe my-web-app --region=$GCP_REGION --format="table(status.traffic[].percent,status.traffic[].revisionName)"
+        
+        # Fail the job to stop pipeline progression
+        exit 1
+      else
+        echo "CANARY VALIDATION PASSED"
+        echo "   Error rate (${ERROR_RATE}%) is below threshold (${ERROR_THRESHOLD_PERCENT}%)"
+        echo ""
+        echo "Canary is healthy - ready for promotion"
+      fi
+
+      echo "AUTOMATED CANARY VALIDATION"
+      
+    
+      # Get the canary URL with error handling
+      CANARY_URL=$(gcloud run services describe my-web-app --region=$GCP_REGION --format="value(status.traffic[].url)" | tr ';' '\n' | grep canary | head -1) || {
+        echo "ERROR: Failed to get canary URL"
+        gcloud run services describe my-web-app --region=$GCP_REGION
+        exit 1
+      }
+      
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success  # Runs automatically after deploy_canary
+  allow_failure: false
+
+
+# =============================================================================
+# MANUAL EMERGENCY ROLLBACK
+# =============================================================================
+# Use this for emergencies when:
+# - Automated rollback didn't trigger but issues were found
+# - Problems discovered after full promotion
+# - Need to rollback to a specific older revision
+#
+# This job can run independently without any dependencies.
+# =============================================================================
+
+rollback_production:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo "$GCP_SA_KEY" > gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file=gcloud-service-key.json
+    - gcloud config set project $GCP_PROJECT_ID
+  needs: []  # Can run independently, no dependencies
+  script:
+    - echo "INITIATING MANUAL ROLLBACK"
+    - echo "================================================"
+    - echo ""
+    - echo "Fetching revision history..."
+    - |
+      gcloud run revisions list \
+        --service=my-web-app \
+        --region=$GCP_REGION \
+        --format="table(name,creationTimestamp,status.conditions[0].status)" \
+        --sort-by="~creationTimestamp" \
+        --limit=5
+    - echo ""
+    - echo "Identifying previous stable revision..."
+    - |
+      # Get the second most recent revision (the one before current)
+      PREVIOUS_REVISION=$(gcloud run revisions list \
+        --service=my-web-app \
+        --region=$GCP_REGION \
+        --format="value(name)" \
+        --sort-by="~creationTimestamp" \
+        --limit=2 | tail -1)
+      
+      echo "Target revision: $PREVIOUS_REVISION"
+    
+    - echo ""
+    - echo "Switching traffic to previous revision..."
+    - |
+      gcloud run services update-traffic my-web-app \
+        --region=$GCP_REGION \
+        --to-revisions=$PREVIOUS_REVISION=100
+    
+    - echo ""
+    - echo "================================================"
+    - echo "MANUAL ROLLBACK COMPLETE"
+    - echo "================================================"
+    - echo ""
+    - 'echo "All traffic (100%) now routed to: $PREVIOUS_REVISION"'
+    - echo ""
+    - echo "Verify the rollback:"
+    - |
+      gcloud run services describe my-web-app \
+        --region=$GCP_REGION \
+        --format="table(status.traffic[].percent,status.traffic[].revisionName)"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual  # Emergency rollback - requires human trigger
+  allow_failure: false

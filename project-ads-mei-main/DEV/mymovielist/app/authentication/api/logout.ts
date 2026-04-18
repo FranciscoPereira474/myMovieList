@@ -1,0 +1,1 @@
+// 1. Termina a sessão do utilizador (server-side).

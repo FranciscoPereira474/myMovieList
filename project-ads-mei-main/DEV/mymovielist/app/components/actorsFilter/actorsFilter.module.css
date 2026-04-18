@@ -1,0 +1,128 @@
+.actors-root {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.actors-input-wrapper {
+  width: 100%;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 98%, white 2%), color-mix(in srgb, var(--bg) 99%, white 1%));
+  border: 1px solid color-mix(in srgb, var(--text-primary) 4%, transparent);
+  border-radius: var(--radius);
+  
+  color: var(--text-primary);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  margin: 1rem 0 1rem 5px;
+  
+}
+
+
+.actors-input-wrapper input {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 98%, white 2%), color-mix(in srgb, var(--bg) 99%, white 1%));
+  color: var(--text-primary);
+  
+  box-sizing: border-box;
+  
+  width: 0;
+  min-width: 30px;
+  flex-grow: 1;
+  border: 0;
+  margin: 5px;
+
+  padding: 8px 9px;
+
+  outline: 0;
+}
+
+.actors-input-wrapper input::placeholder {
+  color: color-mix(in srgb, var(--text-primary) 40%, transparent);
+  font-size: 14px;
+}
+
+.actors-input-wrapper:hover {
+    border: 1px solid var(--accent-start);
+}
+
+.actors-item {
+  display: flex;
+  align-items: center;
+  height: 27px;
+  margin: 2px;
+  margin-left: 5px;
+  line-height: 22px;
+  background-color: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 4%, transparent);
+  border-radius: var(--radius);
+  box-sizing: content-box;
+  padding: 0 4px 0 10px;
+  outline: 0;
+  overflow: hidden;
+}
+
+.actors-item:focus {
+  box-shadow:
+    0 8px 30px color-mix(in srgb, var(--accent-end) 8%, transparent),
+    inset 0 0 0 4px color-mix(in srgb, var(--accent-end) 4%, transparent);
+  border-color: color-mix(in srgb, var(--accent-end) 60%, transparent);
+  transform: translateY(-1px);
+}
+
+.actors-item span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.actors-item svg {
+  font-size: 23px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.actors-listbox {
+  width: 300px;
+  margin: 2px 0 0;
+  padding: 0;
+  position: absolute;
+  list-style: none;
+  background-color: var(--bg);
+  overflow: auto;
+  max-height: 250px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 1;
+}
+
+.actors-listbox li {
+  padding: 5px 12px;
+  display: flex;
+}
+
+.actors-listbox li span {
+  flex-grow: 1;
+}
+
+.actors-listbox li svg {
+  color: transparent;
+}
+
+.actors-listbox li[aria-selected='true'] {
+  background-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  font-weight: 600;
+}
+
+.actors-listbox li[aria-selected='true'] svg {
+  color: var(--accent-end);
+}
+
+.actors-listbox li.Mui-focused {
+  background-color: color-mix(in srgb, var(--accent-end) 15%, transparent);
+  cursor: pointer;
+}
+
+.actors-listbox li.Mui-focused svg {
+  color: currentColor;
+}

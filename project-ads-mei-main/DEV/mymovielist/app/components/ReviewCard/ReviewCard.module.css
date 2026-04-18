@@ -1,0 +1,237 @@
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 98%, white 2%),
+    color-mix(in srgb, var(--bg) 99%, white 1%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  transition: all 0.2s ease;
+}
+
+.reviewCard:hover {
+  border-color: color-mix(in srgb, var(--accent-start) 30%, transparent);
+  transform: translateY(-2px);
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap-reverse;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 5%, transparent);
+}
+
+.contentWrapper {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.movieSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.moviePoster {
+  width: 100px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease;
+}
+
+.moviePoster:hover {
+  transform: scale(1.05);
+}
+
+.reviewContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.userLink {
+  text-decoration: none;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--accent-start) 30%, transparent);
+  flex-shrink: 0;
+}
+
+.avatarPlaceholder {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: var(--gradient-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--bg);
+  flex-shrink: 0;
+}
+
+.username {
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.userLink:hover .username {
+  color: var(--accent-end);
+}
+
+.date {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.reviewText {
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin: 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.reviewText:hover {
+  color: var(--accent-start);
+}
+
+.stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.likeButtonWrapper {
+  position: relative;
+}
+
+.likeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.likeButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.likeButton.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--primary);
+}
+
+.loginMessage {
+  position: absolute;
+  bottom: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--accent-start);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.2s ease;
+}
+
+.loginMessage::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--accent-start);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.replyCountLink {
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 630px) {
+  .reviewCard {
+    padding: 1rem;
+  }
+
+  .contentWrapper {
+    gap: 1rem;
+  }
+
+  .moviePoster {
+    width: 80px;
+    height: 120px;
+  }
+
+  .movieSection {
+    min-width: 80px;
+  }
+
+  .stats {
+    flex-wrap: wrap;
+  }
+}
+

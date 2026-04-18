@@ -1,0 +1,114 @@
+.userPage {
+    max-width: 1920px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    min-width: 0;
+    padding: 0.5rem;
+}
+
+.userHeader {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2rem);
+    margin-top: 2rem;
+    margin-bottom: 0rem;
+    max-width: 1920px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    min-width: 0;
+}
+
+.userHeaderContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2rem);
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 1.5rem;
+}
+
+.userIcon {
+    border-radius: 50%;
+    background-color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.userIcon svg {
+    width: var(--icon-size, 96px);
+    height: var(--icon-size, 96px);
+    transition: all 0.3s ease;
+}
+
+.userName {
+    font-family: var(--font);
+    font-size: var(--font-size, clamp(1.5rem, 4vw, 2.5rem));
+    color: var(--text-primary);
+}
+
+@media (max-width: 1185px) {
+    .userName {
+        font-size: calc(var(--font-size, 2.5rem) * 0.9);
+    }
+}
+
+@media (max-width: 1100px) {
+    .userName {
+        font-size: calc(var(--font-size, 2.5rem) * 0.7);
+    }
+}
+
+@media (max-width: 920px) {
+    .userName {
+        font-size: calc(var(--font-size, 2.5rem) * 0.5);
+    }
+
+    .userIcon svg {
+        width: calc(var(--icon-size, 96px) * 0.7);
+        height: calc(var(--icon-size, 96px) * 0.7);
+    }
+}
+
+@media (max-width: 708px) {
+    .userName {
+        font-size: calc(var(--font-size, 2.5rem) * 0.45);
+    }
+
+    .userIcon svg {
+        width: calc(var(--icon-size, 96px) * 0.6);
+        height: calc(var(--icon-size, 96px) * 0.6);
+    }
+}
+
+@media (max-width: 650px) {
+    .userName {
+        font-size: calc(var(--font-size, 2.5rem) * 0.35);
+    }
+
+    .userIcon svg {
+        width: calc(var(--icon-size, 96px) * 0.4);
+        height: calc(var(--icon-size, 96px) * 0.4);
+    }
+
+    .userHeader {
+        padding: 16px 15px;
+    }
+
+}
+
+@media (max-width: 410px) {
+    .userName {
+        font-size: calc(var(--font-size, 2.5rem) * 0.3);
+    }
+
+    .userIcon svg {
+        width: calc(var(--icon-size, 96px) * 0.35);
+        height: calc(var(--icon-size, 96px) * 0.35);
+    }
+}
